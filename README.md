@@ -10,6 +10,8 @@ libraryDependencies += "com.github.takezoe" %% "scala-retry" % "0.0.1-SNAPSHOT"
 
 ## Retry synchronously
 
+`retryBlocking` runs and retries a given block on the current thread. If the block is successful, it returns a value. Otherwise, it throws an exception. Note that the current thread is blocked during retrying. If you don't want to block the current thread during retrying, use `retryAsync` instead.
+
 ```scala
 import com.github.takezoe.retry._
 import scala.concurrent.duration._
@@ -23,6 +25,8 @@ val result: String = retryBlocking {
 ```
 
 ## Retry asynchronously
+
+`retryAsync` runs and retries a given block on the `RetryManager`'s thread. It returns `Future` instead of a value, and it doesn't block the current thread. So it makes possible to avoid wasting threads.
 
 ```scala
 import com.github.takezoe.retry._
@@ -39,6 +43,8 @@ val future: Future[String] = retryAsync {
 ```
 
 ## Retry Future
+
+`retryFuture` takes `Future` (a block which generates `Future`, more precisely) instead of a block. It works as same as `retryAsync`, but it requires `ExecutionContext` additionally.
 
 ```scala
 import com.github.takezoe.retry._
