@@ -3,7 +3,7 @@ package com.github.takezoe
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
 
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.util.{Failure, Success}
 
@@ -21,7 +21,7 @@ object retry {
             throw e
           }
           count = count + 1
-          Thread.sleep(if(config.backOff) config.retryDuration.toMillis * count else config.retryDuration.toMillis)
+          Thread.sleep(if(config.exponential) config.retryDuration.toMillis * count else config.retryDuration.toMillis)
       }
     }
     ???
@@ -35,7 +35,7 @@ object retry {
     retryManager.scheduleFuture(f)
   }
 
-  case class RetryConfig(maxAttempts: Int, retryDuration: Duration, backOff: Boolean)
+  case class RetryConfig(maxAttempts: Int, retryDuration: FiniteDuration, exponential: Boolean)
 
   class RetryManager {
 
@@ -62,7 +62,7 @@ object retry {
                         task.promise.failure(e)
                       } else {
                         val count = task.count + 1
-                        val nextRun = currentTime + (if(task.config.backOff) task.config.retryDuration.toMillis * count else task.config.retryDuration.toMillis)
+                        val nextRun = currentTime + (if(task.config.exponential) task.config.retryDuration.toMillis * count else task.config.retryDuration.toMillis)
                         tasks.add(new BlockingRetryTask(task.f, task.config, task.promise, nextRun, count))
                       }
                   }
@@ -75,7 +75,7 @@ object retry {
                         task.promise.failure(e)
                       } else {
                         val count = task.count + 1
-                        val nextRun = currentTime + (if(task.config.backOff) task.config.retryDuration.toMillis * count else task.config.retryDuration.toMillis)
+                        val nextRun = currentTime + (if(task.config.exponential) task.config.retryDuration.toMillis * count else task.config.retryDuration.toMillis)
                         tasks.add(new FutureRetryTask(task.f, task.config, task.ec, task.promise, nextRun, count))
                       }
                     }
