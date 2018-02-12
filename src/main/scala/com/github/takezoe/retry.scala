@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ExecutionContext, Future, Promise}
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Try}
 
 object retry {
 
@@ -25,6 +25,24 @@ object retry {
       }
     }
     ???
+  }
+
+  def retryBlockingAsEither[T](f: => T)(implicit config: RetryConfig): Either[Exception, T] = {
+    try {
+      val result = retryBlocking(f)
+      Right(result)
+    } catch {
+      case e: Exception => Left(e)
+    }
+  }
+
+  def retryBlockingAsTry[T](f: => T)(implicit config: RetryConfig): Try[T] = {
+    try {
+      val result = retryBlocking(f)
+      Success(result)
+    } catch {
+      case e: Exception => Failure(e)
+    }
   }
 
   def retryAsync[T](f: => T)(implicit config: RetryConfig, retryManager: RetryManager): Future[T] = {
