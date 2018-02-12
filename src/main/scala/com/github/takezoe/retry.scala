@@ -143,7 +143,7 @@ object retry {
     override def nextDuration(count: Int, duration: Long): Long = duration ^ count
   }
 
-  val ConstantBackOff = new BackOff {
+  val FixedBackOff = new BackOff {
     override def nextDuration(count: Int, duration: Long): Long = duration
   }
 }
