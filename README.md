@@ -2,6 +2,10 @@
 
 Offers simple retry mechanism for Scala.
 
+```scala
+libraryDependencies += "com.github.takezoe" %% "scala-retry" % "0.0.1"
+```
+
 ## Retry synchronously
 
 ```scala
