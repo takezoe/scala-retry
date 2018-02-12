@@ -1,9 +1,11 @@
 # scala-retry
 
-Offers simple retry mechanism for Scala.
+Offers simple retry functionality for Scala.
 
 ```scala
-libraryDependencies += "com.github.takezoe" %% "scala-retry" % "0.0.1"
+resolvers += "sonatype-oss-snapshot" at "https://oss.sonatype.org/content/repositories/snapshots"
+
+libraryDependencies += "com.github.takezoe" %% "scala-retry" % "0.0.1-SNAPSHOT"
 ```
 
 ## Retry synchronously
