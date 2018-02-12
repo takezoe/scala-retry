@@ -35,7 +35,9 @@ object retry {
   class RetryManager {
 
     private val tasks = new ConcurrentLinkedQueue[RetryTask]()
+
     private val running = new AtomicBoolean(true)
+
     private val thread = new Thread {
       override def run(): Unit = {
         while(running.get()){
@@ -78,7 +80,7 @@ object retry {
 
   }
 
-  private class RetryTask(
+  private[retry] class RetryTask(
     val f: () => Any,
     val config: RetryConfig,
     val promise: Promise[Any],
