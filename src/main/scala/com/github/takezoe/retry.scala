@@ -21,7 +21,7 @@ object retry {
             throw e
           }
           count = count + 1
-          Thread.sleep(if(config.exponential) config.retryDuration.toMillis * count else config.retryDuration.toMillis)
+          Thread.sleep(config.backOff.nextDuration(count, config.retryDuration.toMillis))
       }
     }
     ???
@@ -35,7 +35,7 @@ object retry {
     retryManager.scheduleFuture(f)
   }
 
-  case class RetryConfig(maxAttempts: Int, retryDuration: FiniteDuration, exponential: Boolean)
+  case class RetryConfig(maxAttempts: Int, retryDuration: FiniteDuration, backOff: BackOff)
 
   class RetryManager {
 
@@ -62,7 +62,7 @@ object retry {
                         task.promise.failure(e)
                       } else {
                         val count = task.count + 1
-                        val nextRun = currentTime + (if(task.config.exponential) task.config.retryDuration.toMillis * count else task.config.retryDuration.toMillis)
+                        val nextRun = currentTime + task.config.backOff.nextDuration(count, task.config.retryDuration.toMillis)
                         tasks.add(new BlockingRetryTask(task.f, task.config, task.promise, nextRun, count))
                       }
                   }
@@ -75,7 +75,7 @@ object retry {
                         task.promise.failure(e)
                       } else {
                         val count = task.count + 1
-                        val nextRun = currentTime + (if(task.config.exponential) task.config.retryDuration.toMillis * count else task.config.retryDuration.toMillis)
+                        val nextRun = currentTime + task.config.backOff.nextDuration(count, task.config.retryDuration.toMillis)
                         tasks.add(new FutureRetryTask(task.f, task.config, task.ec, task.promise, nextRun, count))
                       }
                     }
@@ -131,4 +131,19 @@ object retry {
     val count: Int = 0
   ) extends RetryTask
 
+  sealed trait BackOff {
+    def nextDuration(count: Int, duration: Long): Long
+  }
+
+  val LinerBackOff = new BackOff{
+    override def nextDuration(count: Int, duration: Long): Long = duration * count
+  }
+
+  val ExponentialBackOff = new BackOff {
+    override def nextDuration(count: Int, duration: Long): Long = duration ^ count
+  }
+
+  val ConstantBackOff = new BackOff {
+    override def nextDuration(count: Int, duration: Long): Long = duration
+  }
 }
