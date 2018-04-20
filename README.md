@@ -1,4 +1,4 @@
-# scala-retry
+# scala-retry [![Build Status](https://travis-ci.org/takezoe/scala-retry.svg?branch=master)](https://travis-ci.org/takezoe/scala-retry)
 
 Offers simple retry functionality for Scala.
 
