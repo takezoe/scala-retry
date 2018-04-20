@@ -21,7 +21,7 @@ package object retry {
           Thread.sleep(config.backOff.nextDuration(count, config.retryDuration.toMillis))
       }
     }
-    ???
+    ??? // never come here
   }
 
   def retryBlockingAsEither[T](f: => T)(implicit config: RetryConfig): Either[Throwable, T] = {
