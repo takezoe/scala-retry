@@ -4,6 +4,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
 
 import scala.concurrent.{ExecutionContext, Future, Promise}
+import scala.util.control.NonFatal
 import scala.util.{Failure, Success}
 
 class RetryManager {
@@ -26,7 +27,7 @@ class RetryManager {
                   val result = task.f()
                   task.promise.success(result)
                 } catch {
-                  case e: Exception =>
+                  case NonFatal(e) =>
                     if(task.count == task.config.maxAttempts){
                       task.promise.failure(e)
                     } else {

@@ -1,6 +1,7 @@
 package com.github.takezoe
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
 
 package object retry {
@@ -12,7 +13,7 @@ package object retry {
       try {
         return f
       } catch {
-        case e: Exception =>
+        case NonFatal(e) =>
           if(count == config.maxAttempts){
             throw e
           }
@@ -23,12 +24,12 @@ package object retry {
     ???
   }
 
-  def retryBlockingAsEither[T](f: => T)(implicit config: RetryConfig): Either[Exception, T] = {
+  def retryBlockingAsEither[T](f: => T)(implicit config: RetryConfig): Either[Throwable, T] = {
     try {
       val result = retryBlocking(f)
       Right(result)
     } catch {
-      case e: Exception => Left(e)
+      case NonFatal(e) => Left(e)
     }
   }
 
@@ -37,7 +38,7 @@ package object retry {
       val result = retryBlocking(f)
       Success(result)
     } catch {
-      case e: Exception => Failure(e)
+      case NonFatal(e) => Failure(e)
     }
   }
 
