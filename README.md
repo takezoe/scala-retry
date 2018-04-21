@@ -24,24 +24,6 @@ val result: String = retryBlocking {
 }
 ```
 
-## Retry asynchronously
-
-`retryAsync` runs and retries a given block on the `RetryManager`'s thread. It returns `Future` instead of a value, and it doesn't block the current thread. So it makes possible to avoid wasting threads.
-
-```scala
-import com.github.takezoe.retry._
-import scala.concurrent.duration._
-import scala.concurrent.Future
-
-implicit val rm = new RetryManager()
-implicit val config = RetryConfig(maxAttempts = 3, retryDuration = 1.seconds, backOff = LinerBackOff)
-
-val future: Future[String] = retryAsync {
-  // something to retry
-  "Hello World!"
-}
-```
-
 ## Retry Future
 
 `retryFuture` takes `Future` (a block which generates `Future`, more precisely) instead of a block. It works as same as `retryAsync`, but it requires `ExecutionContext` additionally.
