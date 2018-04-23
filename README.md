@@ -3,7 +3,7 @@
 Offers simple retry functionality for Scala.
 
 ```scala
-libraryDependencies += "com.github.takezoe" %% "scala-retry" % "0.0.1"
+libraryDependencies += "com.github.takezoe" %% "scala-retry" % "0.0.2"
 ```
 
 ## Retry synchronously

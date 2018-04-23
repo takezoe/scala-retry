@@ -8,7 +8,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class RetryTest extends FunSuite {
 
   test("retryBlocking (success)"){
-    implicit val retryConfig = RetryConfig(2, 1 second, FixedBackOff)
+    implicit val retryConfig = RetryConfig(2, 1.second, FixedBackOff)
     var count = 0
 
     val result = retryBlocking {
@@ -23,7 +23,7 @@ class RetryTest extends FunSuite {
   }
 
   test("retryBlocking (failure)"){
-    implicit val retryConfig = RetryConfig(2, 1 second, FixedBackOff)
+    implicit val retryConfig = RetryConfig(2, 1.second, FixedBackOff)
     var count = 0
 
     assertThrows[RuntimeException] {
@@ -38,7 +38,7 @@ class RetryTest extends FunSuite {
   }
 
   test("retryFuture (success)"){
-    implicit val retryConfig = RetryConfig(2, 1 second, FixedBackOff)
+    implicit val retryConfig = RetryConfig(2, 1.second, FixedBackOff)
     implicit val retryManager = new RetryManager()
     var count = 0
 
@@ -51,14 +51,14 @@ class RetryTest extends FunSuite {
         count
       }
     }
-    val result = Await.result(f, 5 seconds)
+    val result = Await.result(f, 5.seconds)
 
     assert(result == 3)
     retryManager.shutdown()
   }
 
   test("retryFuture (failure)"){
-    implicit val retryConfig = RetryConfig(2, 1 second, FixedBackOff)
+    implicit val retryConfig = RetryConfig(2, 1.second, FixedBackOff)
     implicit val retryManager = new RetryManager()
     var count = 0
 
@@ -73,7 +73,7 @@ class RetryTest extends FunSuite {
     }
 
     assertThrows[RuntimeException]{
-      Await.result(f, 5 seconds)
+      Await.result(f, 5.seconds)
     }
 
     retryManager.shutdown()

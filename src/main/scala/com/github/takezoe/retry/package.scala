@@ -43,8 +43,13 @@ package object retry {
   }
 
   def retryFuture[T](f: => Future[T])(implicit config: RetryConfig, retryManager: RetryManager, ec: ExecutionContext): Future[T] = {
-    f.failed.flatMap { _ =>
-      retryManager.scheduleFuture(f)
+    val future = f
+    if(config.maxAttempts > 0){
+      future.recoverWith { case _ =>
+        retryManager.scheduleFuture(f)
+      }
+    } else {
+      future
     }
   }
 
