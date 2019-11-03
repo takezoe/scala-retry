@@ -2,7 +2,7 @@ name := "scala-retry"
 
 organization := "com.github.takezoe"
 
-version := "0.0.3-SNAPSHOT"
+version := "0.0.3"
 
 scalaVersion := "2.12.8"
 
