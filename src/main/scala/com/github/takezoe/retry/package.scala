@@ -14,7 +14,7 @@ package object retry {
         return f
       } catch {
         case NonFatal(e) =>
-          if(count == config.maxAttempts){
+          if(count == config.maxAttempts - 1){
             throw e
           }
           count = count + 1
