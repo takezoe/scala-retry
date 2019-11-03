@@ -57,11 +57,11 @@ package object retry {
     }
   }
 
-  private[retry] def jitter(jitter: Long): Long = {
-    if(jitter == 0){
+  private[retry] def jitter(maxMills: Long): Long = {
+    if(maxMills == 0){
       0
     } else {
-      (r.nextDouble() * jitter).toLong
+      (r.nextDouble() * maxMills).toLong
     }
   }
 
