@@ -2,9 +2,11 @@ package com.github.takezoe
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Random, Success, Try}
 
 package object retry {
+
+  private val r = new Random()
 
   def retryBlocking[T](f: => T)(implicit config: RetryConfig): T = {
     var count = 0
@@ -18,7 +20,9 @@ package object retry {
             throw e
           }
           count = count + 1
-          Thread.sleep(config.backOff.nextDuration(count, config.retryDuration.toMillis))
+          Thread.sleep(
+            config.backOff.nextDuration(count, config.retryDuration.toMillis) + jitter(config.jitter.toMillis)
+          )
       }
     }
     ??? // never come here
@@ -50,6 +54,14 @@ package object retry {
       }
     } else {
       future
+    }
+  }
+
+  private[retry] def jitter(jitter: Long): Long = {
+    if(jitter == 0){
+      0
+    } else {
+      (r.nextDouble() * jitter).toLong
     }
   }
 

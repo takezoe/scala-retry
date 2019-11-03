@@ -14,7 +14,12 @@ libraryDependencies += "com.github.takezoe" %% "scala-retry" % "0.0.2"
 import com.github.takezoe.retry._
 import scala.concurrent.duration._
 
-implicit val config = RetryConfig(maxAttempts = 3, retryDuration = 1.seconds, backOff = LinerBackOff)
+implicit val config = RetryConfig(
+  maxAttempts = 3, 
+  retryDuration = 1.second, 
+  backOff = ExponentialBackOff, // default is FixedBackOff
+  jitter = 1.second // default is no jitter
+)
 
 val result: String = retryBlocking {
   // something to retry
@@ -33,7 +38,11 @@ import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
 implicit val rm = new RetryManager()
-implicit val config = RetryConfig(maxAttempts = 3, retryDuration = 1.seconds, backOff = LinerBackOff)
+implicit val config = RetryConfig(
+  maxAttempts = 3, 
+  retryDuration = 1.second, 
+  backOff = ExponentialBackOff
+)
 
 val future: Future[String] = retryFuture {
   Future {

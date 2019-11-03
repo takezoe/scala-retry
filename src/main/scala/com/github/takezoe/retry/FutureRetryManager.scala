@@ -28,7 +28,8 @@ class RetryManager {
                   task.promise.failure(e)
                 } else {
                   val count = task.count + 1
-                  val nextRun = currentTime + task.config.backOff.nextDuration(count, task.config.retryDuration.toMillis)
+                  val nextDuration = task.config.backOff.nextDuration(count, task.config.retryDuration.toMillis)
+                  val nextRun = currentTime + nextDuration + jitter(task.config.jitter.toMillis)
                   tasks.add(new FutureRetryTask(task.f, task.config, task.ec, task.promise, nextRun, count))
                 }
               }
