@@ -17,8 +17,10 @@ import java.util.concurrent.ThreadLocalRandom
       } catch {
         case NonFatal(e) =>
           if(count == policy.maxAttempts){
+            policy.onFailure(e)
             throw e
           }
+          policy.onRetry(e)
           count = count + 1
           Thread.sleep(
             policy.backOff.nextDuration(count, policy.retryDuration.toMillis) + jitter(policy.jitter.toMillis)

@@ -6,7 +6,9 @@ case class RetryPolicy(
   maxAttempts: Int,
   retryDuration: FiniteDuration,
   backOff: BackOff = FixedBackOff,
-  jitter: FiniteDuration = 0.second
+  jitter: FiniteDuration = 0.second,
+  onRetry: Throwable => Unit = _ => (),
+  onFailure: Throwable => Unit = _ => ()
 )
 
 object RetryPolicy {
