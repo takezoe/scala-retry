@@ -8,7 +8,17 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class RetryTest extends FunSuite {
 
   test("retry (success)"){
-    implicit val retryPolicy = RetryPolicy(2, 1.second, FixedBackOff)
+    implicit val retryPolicy = RetryPolicy(
+      maxAttempts = 2, 
+      retryDuration = 1.second, 
+      backOff = FixedBackOff, 
+      onRetry = { t =>
+        println(s"retry: ${t.toString}")
+      },
+      onFailure = { t =>
+        println(s"failure: ${t.toString}")
+      }
+    )
     var count = 0
 
     val result = retry {
@@ -23,7 +33,17 @@ class RetryTest extends FunSuite {
   }
 
   test("retry (failure)"){
-    implicit val retryPolicy = RetryPolicy(2, 1.second, FixedBackOff)
+    implicit val retryPolicy = RetryPolicy(
+      maxAttempts = 2, 
+      retryDuration = 1.second, 
+      backOff = FixedBackOff, 
+      onRetry = { t =>
+        println(s"retry: ${t.toString}")
+      },
+      onFailure = { t =>
+        println(s"failure: ${t.toString}")
+      }
+    )
     var count = 0
 
     assertThrows[RuntimeException] {
@@ -58,7 +78,17 @@ class RetryTest extends FunSuite {
   }
 
   test("retryFuture (failure)"){
-    implicit val retryPolicy = RetryPolicy(2, 1.second, FixedBackOff)
+    implicit val retryPolicy = RetryPolicy(
+      maxAttempts = 2, 
+      retryDuration = 1.second, 
+      backOff = FixedBackOff, 
+      onRetry = { t =>
+        println(s"retry: ${t.toString}")
+      },
+      onFailure = { t =>
+        println(s"failure: ${t.toString}")
+      }
+    )
     implicit val retryManager = new RetryManager()
     var count = 0
 
