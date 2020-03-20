@@ -27,7 +27,7 @@ import java.util.concurrent.ThreadLocalRandom
           )
       }
     }
-    ??? // never come here
+    ??? // never come to here
   }
 
   def retryBlockingAsEither[T](f: => T)(implicit policy: RetryPolicy): Either[Throwable, T] = {
@@ -67,4 +67,47 @@ import java.util.concurrent.ThreadLocalRandom
     }
   }
 
+  def circuitBreaker[T](f: => T)(implicit policy: CircuitBreakerPolicy): T = {
+    import CircuitBreakerPolicy._
+    def run(): T = {
+        try {
+          val result = f
+          policy.succeeded()
+          result
+        } catch {
+          case NonFatal(e) =>
+            policy.failed(e)
+            throw e
+        }
+    }
+
+    policy.getState() match {
+      case (Open, Some((lastFailureTimeMillis, lastException))) => {
+        if (System.currentTimeMillis - lastFailureTimeMillis >= policy.retryDuration.toMillis) {
+          run()
+        } else {
+          throw lastException
+        }
+      }
+      case _ => run()
+    }
+  }
+
+  def circuitBreakerAsEither[T](f: => T)(implicit policy: CircuitBreakerPolicy): Either[Throwable, T] = {
+    try {
+      val result = circuitBreaker(f)
+      Right(result)
+    } catch {
+      case NonFatal(e) => Left(e) 
+    }
+  }
+
+  def circuitBreakerAsTry[T](f: => T)(implicit policy: CircuitBreakerPolicy): Try[T] = {
+    try {
+      val result = circuitBreaker(f)
+      Success(result)
+    } catch {
+      case NonFatal(e) => Failure(e) 
+    }
+  }
 }
