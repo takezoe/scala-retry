@@ -24,13 +24,13 @@ class RetryManager {
             future.onComplete {
               case Success(v) => task.promise.success(v)
               case Failure(e) => {
-                if(task.count == task.config.maxAttempts){
+                if(task.count == task.policy.maxAttempts){
                   task.promise.failure(e)
                 } else {
                   val count = task.count + 1
-                  val nextDuration = task.config.backOff.nextDuration(count, task.config.retryDuration.toMillis)
-                  val nextRun = currentTime + nextDuration + jitter(task.config.jitter.toMillis)
-                  tasks.add(new FutureRetryTask(task.f, task.config, task.ec, task.promise, nextRun, count))
+                  val nextDuration = task.policy.backOff.nextDuration(count, task.policy.retryDuration.toMillis)
+                  val nextRun = currentTime + nextDuration + jitter(task.policy.jitter.toMillis)
+                  tasks.add(new FutureRetryTask(task.f, task.policy, task.ec, task.promise, nextRun, count))
                 }
               }
             }(task.ec)
@@ -43,9 +43,9 @@ class RetryManager {
 
   thread.start()
 
-  def scheduleFuture[T](f: => Future[T])(implicit config: RetryConfig, ec: ExecutionContext): Future[T] = {
+  def scheduleFuture[T](f: => Future[T])(implicit policy: RetryPolicy, ec: ExecutionContext): Future[T] = {
     val promise = Promise[T]()
-    val task = new FutureRetryTask(() => f, config, ec, promise.asInstanceOf[Promise[Any]], System.currentTimeMillis + config.retryDuration.toMillis)
+    val task = new FutureRetryTask(() => f, policy, ec, promise.asInstanceOf[Promise[Any]], System.currentTimeMillis + policy.retryDuration.toMillis)
     tasks.add(task)
     promise.future
   }
@@ -58,7 +58,7 @@ class RetryManager {
 
 private[retry] class FutureRetryTask(
   val f: () => Future[Any],
-  val config: RetryConfig,
+  val policy: RetryPolicy,
   val ec: ExecutionContext,
   val promise: Promise[Any],
   val nextRun: Long,

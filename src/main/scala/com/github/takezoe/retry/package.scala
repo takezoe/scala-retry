@@ -8,7 +8,7 @@ package object retry {
 
 import java.util.concurrent.ThreadLocalRandom
 
-  def retryBlocking[T](f: => T)(implicit config: RetryConfig): T = {
+  def retryBlocking[T](f: => T)(implicit policy: RetryPolicy): T = {
     var count = 0
 
     while(true){
@@ -16,19 +16,19 @@ import java.util.concurrent.ThreadLocalRandom
         return f
       } catch {
         case NonFatal(e) =>
-          if(count == config.maxAttempts){
+          if(count == policy.maxAttempts){
             throw e
           }
           count = count + 1
           Thread.sleep(
-            config.backOff.nextDuration(count, config.retryDuration.toMillis) + jitter(config.jitter.toMillis)
+            policy.backOff.nextDuration(count, policy.retryDuration.toMillis) + jitter(policy.jitter.toMillis)
           )
       }
     }
     ??? // never come here
   }
 
-  def retryBlockingAsEither[T](f: => T)(implicit config: RetryConfig): Either[Throwable, T] = {
+  def retryBlockingAsEither[T](f: => T)(implicit policy: RetryPolicy): Either[Throwable, T] = {
     try {
       val result = retryBlocking(f)
       Right(result)
@@ -37,7 +37,7 @@ import java.util.concurrent.ThreadLocalRandom
     }
   }
 
-  def retryBlockingAsTry[T](f: => T)(implicit config: RetryConfig): Try[T] = {
+  def retryBlockingAsTry[T](f: => T)(implicit policy: RetryPolicy): Try[T] = {
     try {
       val result = retryBlocking(f)
       Success(result)
@@ -46,9 +46,9 @@ import java.util.concurrent.ThreadLocalRandom
     }
   }
 
-  def retryFuture[T](f: => Future[T])(implicit config: RetryConfig, retryManager: RetryManager, ec: ExecutionContext): Future[T] = {
+  def retryFuture[T](f: => Future[T])(implicit policy: RetryPolicy, retryManager: RetryManager, ec: ExecutionContext): Future[T] = {
     val future = f
-    if(config.maxAttempts > 0){
+    if(policy.maxAttempts > 0){
       future.recoverWith { case _ =>
         retryManager.scheduleFuture(f)
       }
