@@ -7,11 +7,11 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 class RetryTest extends FunSuite {
 
-  test("retryBlocking (success)"){
+  test("retry (success)"){
     implicit val retryPolicy = RetryPolicy(2, 1.second, FixedBackOff)
     var count = 0
 
-    val result = retryBlocking {
+    val result = retry {
       count = count + 1
       if(count < 3){
         throw new RuntimeException()
@@ -22,12 +22,12 @@ class RetryTest extends FunSuite {
     assert(result == 3)
   }
 
-  test("retryBlocking (failure)"){
+  test("retry (failure)"){
     implicit val retryPolicy = RetryPolicy(2, 1.second, FixedBackOff)
     var count = 0
 
     assertThrows[RuntimeException] {
-      retryBlocking {
+      retry {
         count = count + 1
         if(count < 4){
           throw new RuntimeException()

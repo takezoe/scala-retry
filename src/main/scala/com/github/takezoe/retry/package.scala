@@ -8,7 +8,7 @@ package object retry {
 
 import java.util.concurrent.ThreadLocalRandom
 
-  def retryBlocking[T](f: => T)(implicit policy: RetryPolicy): T = {
+  def retry[T](f: => T)(implicit policy: RetryPolicy): T = {
     var count = 0
 
     while(true){
@@ -30,9 +30,9 @@ import java.util.concurrent.ThreadLocalRandom
     ??? // never come to here
   }
 
-  def retryBlockingAsEither[T](f: => T)(implicit policy: RetryPolicy): Either[Throwable, T] = {
+  def retryAsEither[T](f: => T)(implicit policy: RetryPolicy): Either[Throwable, T] = {
     try {
-      val result = retryBlocking(f)
+      val result = retry(f)
       Right(result)
     } catch {
       case NonFatal(e) => Left(e)
@@ -41,7 +41,7 @@ import java.util.concurrent.ThreadLocalRandom
 
   def retryBlockingAsTry[T](f: => T)(implicit policy: RetryPolicy): Try[T] = {
     try {
-      val result = retryBlocking(f)
+      val result = retry(f)
       Success(result)
     } catch {
       case NonFatal(e) => Failure(e)
