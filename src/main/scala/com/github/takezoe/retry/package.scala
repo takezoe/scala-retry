@@ -6,7 +6,7 @@ import scala.util.{Failure, Random, Success, Try}
 
 package object retry {
 
-  private val r = new Random()
+import java.util.concurrent.ThreadLocalRandom
 
   def retryBlocking[T](f: => T)(implicit config: RetryConfig): T = {
     var count = 0
@@ -61,7 +61,7 @@ package object retry {
     if(maxMills == 0){
       0
     } else {
-      (r.nextDouble() * maxMills).toLong
+      (ThreadLocalRandom.current().nextDouble() * maxMills).toLong
     }
   }
 
