@@ -12,12 +12,8 @@ class RetryTest extends FunSuite {
       maxAttempts = 2, 
       retryDuration = 1.second, 
       backOff = FixedBackOff, 
-      onRetry = { t =>
-        println(s"retry: ${t.toString}")
-      },
-      onFailure = { t =>
-        println(s"failure: ${t.toString}")
-      }
+      onRetry = c => println(s"retry: ${c.toString}"),
+      onFailure = c => println(s"failure: ${c.toString}")
     )
     var count = 0
 
@@ -37,12 +33,8 @@ class RetryTest extends FunSuite {
       maxAttempts = 2, 
       retryDuration = 1.second, 
       backOff = FixedBackOff, 
-      onRetry = { t =>
-        println(s"retry: ${t.toString}")
-      },
-      onFailure = { t =>
-        println(s"failure: ${t.toString}")
-      }
+      onRetry = c => println(s"retry: ${c.toString}"),
+      onFailure = c => println(s"failure: ${c.toString}")
     )
     var count = 0
 
@@ -58,7 +50,13 @@ class RetryTest extends FunSuite {
   }
 
   test("retryFuture (success)"){
-    implicit val retryPolicy = RetryPolicy(2, 1.second, FixedBackOff)
+    implicit val retryPolicy = RetryPolicy(
+      maxAttempts = 2, 
+      retryDuration = 1.second, 
+      backOff = FixedBackOff,
+      onRetry = c => println(s"retry: ${c.toString}"),
+      onFailure = c => println(s"failure: ${c.toString}")
+    )
     implicit val retryManager = new RetryManager()
     var count = 0
 
@@ -82,12 +80,8 @@ class RetryTest extends FunSuite {
       maxAttempts = 2, 
       retryDuration = 1.second, 
       backOff = FixedBackOff, 
-      onRetry = { t =>
-        println(s"retry: ${t.toString}")
-      },
-      onFailure = { t =>
-        println(s"failure: ${t.toString}")
-      }
+      onRetry = c => println(s"retry: ${c.toString}"),
+      onFailure = c => println(s"failure: ${c.toString}")
     )
     implicit val retryManager = new RetryManager()
     var count = 0

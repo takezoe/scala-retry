@@ -17,10 +17,10 @@ import java.util.concurrent.ThreadLocalRandom
       } catch {
         case NonFatal(e) =>
           if(count == policy.maxAttempts){
-            policy.onFailure(e)
+            policy.onFailure(RetryContext(count + 1, e))
             throw e
           }
-          policy.onRetry(e)
+          policy.onRetry(RetryContext(count + 1, e))
           count = count + 1
           Thread.sleep(
             policy.backOff.nextDuration(count, policy.retryDuration.toMillis) + jitter(policy.jitter.toMillis)
@@ -82,7 +82,7 @@ import java.util.concurrent.ThreadLocalRandom
     }
 
     policy.getContext() match {
-      case CircuitBreakerContext(Open, _, _, Some(LastFailure(lastFailureTimeMillis, lastException))) => {
+      case CircuitBreakerContext(Open, _, _, Some(FailureInfo(lastFailureTimeMillis, lastException))) => {
         if (System.currentTimeMillis - lastFailureTimeMillis >= policy.retryDuration.toMillis) {
           run()
         } else {

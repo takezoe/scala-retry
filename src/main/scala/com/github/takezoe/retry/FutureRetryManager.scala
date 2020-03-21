@@ -25,10 +25,10 @@ class RetryManager {
               case Success(v) => task.promise.success(v)
               case Failure(e) => {
                 if(task.count == task.policy.maxAttempts){
-                  task.policy.onFailure(e)
+                  task.policy.onFailure(RetryContext(task.count + 1, e))
                   task.promise.failure(e)
                 } else {
-                  task.policy.onRetry(e)
+                  task.policy.onRetry(RetryContext(task.count + 1, e))
                   val count = task.count + 1
                   val nextDuration = task.policy.backOff.nextDuration(count, task.policy.retryDuration.toMillis)
                   val nextRun = currentTime + nextDuration + jitter(task.policy.jitter.toMillis)
