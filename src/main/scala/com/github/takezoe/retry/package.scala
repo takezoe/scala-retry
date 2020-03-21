@@ -81,8 +81,8 @@ import java.util.concurrent.ThreadLocalRandom
         }
     }
 
-    policy.getState() match {
-      case (Open, Some((lastFailureTimeMillis, lastException))) => {
+    policy.getContext() match {
+      case CircuitBreakerContext(Open, _, _, Some(LastFailure(lastFailureTimeMillis, lastException))) => {
         if (System.currentTimeMillis - lastFailureTimeMillis >= policy.retryDuration.toMillis) {
           run()
         } else {

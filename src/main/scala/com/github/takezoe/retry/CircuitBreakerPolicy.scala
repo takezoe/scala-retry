@@ -5,71 +5,85 @@ import java.util.concurrent.atomic.LongAdder
 import java.util.concurrent.atomic.AtomicReference
 import CircuitBreakerPolicy._
 
+case class CircuitBreakerContext(
+  state: State = Close,
+  failureCount: Int = 0,
+  successCount: Int = 0,
+  lastFailure: Option[FailureInfo] = None,
+)
+
+case class FailureInfo(
+    timestampMillis: Long,
+    exception: Throwable
+)
+
 class CircuitBreakerPolicy(
     val failureThreshold: Int,
     val successThreshold: Int,
     val retryDuration: FiniteDuration,
-    val onClose: () => Unit = () => (),
-    val onOpen: (Throwable) => Unit = _ => (),
-    val onHalfOpen: () => Unit = () => ()
+    val onClose: (CircuitBreakerContext) => Unit = _ => (),
+    val onOpen: (CircuitBreakerContext) => Unit = _ => (),
+    val onHalfOpen: (CircuitBreakerContext) => Unit = _ => ()
 ){
-    private val successCount = new LongAdder()
-    private val failureCount = new LongAdder()
-    private val lastFailure = new AtomicReference[(Long, Throwable)]()
-    private val state = new AtomicReference[State](Close)
+    private val context = new AtomicReference[CircuitBreakerContext](CircuitBreakerContext())
 
     def failed(e: Throwable): Unit = {
-        lastFailure.set((System.currentTimeMillis, e))
-        failureCount.increment()
-        successCount.reset()
-
         // if failureThreashod <= 0 then the circuit breaker never closes.
         if (failureThreshold > 0) {
-            state.get() match {
-                case Close => 
-                    if (failureCount.intValue() >= failureThreshold) {
-                        state.set(Open)
-                        onOpen(e)
+            val nextContext = context.get() match {
+                case c @ CircuitBreakerContext(Close, failureCount, _, _) => 
+                    if (failureCount + 1 >= failureThreshold) {
+                        val nextContext = c.copy(state = Open, failureCount = failureCount + 1, successCount = 0, lastFailure = Some(FailureInfo(System.currentTimeMillis(), e)))
+                        onOpen(nextContext)
+                        nextContext
+                    } else {
+                        val nextContext = c.copy(failureCount = failureCount + 1)
+                        nextContext
                     }
-                case Open =>
-                    // Nothing to do
-                case HalfOpen => 
-                    state.set(Open)
-                    onOpen(e)
+                case c @ CircuitBreakerContext(Open, failureCount, _, _) =>
+                    val nextContext = c.copy(failureCount = failureCount + 1, successCount = 0)
+                    nextContext
+                case c @ CircuitBreakerContext(HalfOpen, failureCount, _, _) => 
+                    val nextContext = c.copy(state = Open, failureCount = failureCount + 1, successCount = 0, lastFailure = Some(FailureInfo(System.currentTimeMillis(), e)))
+                    onOpen(nextContext)
+                    nextContext
             }
+            context.set(nextContext)
         } 
     }
 
     def succeeded(): Unit = {
-        lastFailure.set(null)
-        successCount.increment()
-        failureCount.reset()
-
         // if failureThreashod <= 0 then the circuit breaker never closes.
         if (failureThreshold > 0) {
-            state.get() match {
-                case Close =>
-                    // Nothing to do
-                case Open =>
-                    if (successCount.intValue() >= successThreshold) {
-                        state.set(Close)
-                        onClose()
+            val nextContext = context.get() match {
+                case c @ CircuitBreakerContext(Close, _, successCount, _) =>
+                  val nextContext = c.copy(failureCount = 0, successCount = successCount + 1)
+                  nextContext
+                case c @ CircuitBreakerContext(Open, _, successCount, _) =>
+                    if (successCount + 1 >= successThreshold) {
+                        val nextContext = c.copy(state = Close, failureCount = 0, successCount = successCount + 1, lastFailure = None)
+                        onClose(nextContext)
+                        nextContext
                     } else {
-                        state.set(HalfOpen)
-                        onHalfOpen()
+                        val nextContext = c.copy(state = HalfOpen, failureCount = 0, successCount = successCount + 1, lastFailure = None)
+                        onHalfOpen(nextContext)
+                        nextContext
                     }
-                case HalfOpen =>
-                    if (successCount.intValue() >= successThreshold) {
-                        state.set(Close)
-                        onClose()
+                case c @ CircuitBreakerContext(HalfOpen, _, successCount, _) =>
+                    if (successCount + 1 >= successThreshold) {
+                        val nextContext = c.copy(state = Close, failureCount = 0, successCount = successCount + 1, lastFailure = None)
+                        onClose(nextContext)
+                        nextContext
+                    } else {
+                        val nextContext = c.copy(failureCount = 0, successCount = successCount + 1)
+                        nextContext
                     }
             }
+            context.set(nextContext)
         }
     }
 
-    def getState(): (State, Option[(Long, Throwable)]) = {
-        (state.get(), Option(lastFailure.get()))
-    }
+    def getContext(): CircuitBreakerContext = context.get()
 }
 
 object CircuitBreakerPolicy {
@@ -84,9 +98,9 @@ object CircuitBreakerPolicy {
         failureThreshold: Int, 
         successThreshold: Int, 
         retryDuration: FiniteDuration,
-        onClose: () => Unit = () => (),
-        onOpen: (Throwable) => Unit = _ => (),
-        onHalfOpen: () => Unit = () => ()        
+        onClose: (CircuitBreakerContext) => Unit = _ => (),
+        onOpen: (CircuitBreakerContext) => Unit = _ => (),
+        onHalfOpen: (CircuitBreakerContext) => Unit = _ => ()        
     ): CircuitBreakerPolicy = {
         new CircuitBreakerPolicy(
             failureThreshold = failureThreshold,

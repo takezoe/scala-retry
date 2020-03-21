@@ -12,9 +12,9 @@ class CircuitBreakerTest extends FunSuite {
             failureThreshold = 3,
             successThreshold = 2,
             retryDuration = 1.second,
-            onOpen = (e) => println(s"open: ${e.toString}"),
-            onClose = () => println("close"),
-            onHalfOpen = () => println("halfOpen")
+            onOpen = c => println(c),
+            onClose = c => println(c),
+            onHalfOpen = c => println(c)
         )
 
         assert(circuitBreaker { "OK" } == "OK")
