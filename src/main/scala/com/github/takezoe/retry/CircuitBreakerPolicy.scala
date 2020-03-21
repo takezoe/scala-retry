@@ -8,7 +8,10 @@ import CircuitBreakerPolicy._
 class CircuitBreakerPolicy(
     val failureThreshold: Int,
     val successThreshold: Int,
-    val retryDuration: FiniteDuration
+    val retryDuration: FiniteDuration,
+    val onClose: () => Unit = () => (),
+    val onOpen: (Throwable) => Unit = _ => (),
+    val onHalfOpen: () => Unit = () => ()
 ){
     private val successCount = new LongAdder()
     private val failureCount = new LongAdder()
@@ -26,11 +29,13 @@ class CircuitBreakerPolicy(
                 case Close => 
                     if (failureCount.intValue() >= failureThreshold) {
                         state.set(Open)
+                        onOpen(e)
                     }
                 case Open =>
                     // Nothing to do
                 case HalfOpen => 
-                    state.set(Open)                    
+                    state.set(Open)
+                    onOpen(e)
             }
         } 
     }
@@ -48,12 +53,15 @@ class CircuitBreakerPolicy(
                 case Open =>
                     if (successCount.intValue() >= successThreshold) {
                         state.set(Close)
+                        onClose()
                     } else {
                         state.set(HalfOpen)
+                        onHalfOpen()
                     }
                 case HalfOpen =>
                     if (successCount.intValue() >= successThreshold) {
                         state.set(Close)
+                        onClose()
                     }
             }
         }
@@ -71,5 +79,23 @@ object CircuitBreakerPolicy {
     case object HalfOpen extends State
 
     val NeverOpen = new CircuitBreakerPolicy(0, 0, 0.second)
+
+    def apply(
+        failureThreshold: Int, 
+        successThreshold: Int, 
+        retryDuration: FiniteDuration,
+        onClose: () => Unit = () => (),
+        onOpen: (Throwable) => Unit = _ => (),
+        onHalfOpen: () => Unit = () => ()        
+    ): CircuitBreakerPolicy = {
+        new CircuitBreakerPolicy(
+            failureThreshold = failureThreshold,
+            successThreshold = successThreshold,
+            retryDuration = retryDuration,
+            onClose = onClose,
+            onOpen = onOpen,
+            onHalfOpen = onHalfOpen
+        )
+    }
 
 }
