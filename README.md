@@ -3,25 +3,25 @@
 Offers simple retry functionality for Scala.
 
 ```scala
-libraryDependencies += "com.github.takezoe" %% "scala-retry" % "0.0.3"
+libraryDependencies += "com.github.takezoe" %% "scala-retry" % "0.0.4"
 ```
 
 ## Retry synchronously
 
-`retryBlocking` runs and retries a given block on the current thread. If the block is successful, it returns a value. Otherwise, it throws an exception. Note that the current thread is blocked during retrying. If you don't want to block the current thread during retrying, use `retryAsync` instead.
+`retry` runs and retries a given block on the current thread. If the block is successful, it returns a value. Otherwise, it throws an exception. Note that the current thread is blocked during retrying.
 
 ```scala
 import com.github.takezoe.retry._
 import scala.concurrent.duration._
 
-implicit val config = RetryConfig(
+implicit val policy = RetryPolicy(
   maxAttempts = 3, 
   retryDuration = 1.second, 
   backOff = ExponentialBackOff, // default is FixedBackOff
   jitter = 1.second // default is no jitter
 )
 
-val result: String = retryBlocking {
+val result: String = retry {
   // something to retry
   "Hello World!"
 }
@@ -29,7 +29,7 @@ val result: String = retryBlocking {
 
 ## Retry Future
 
-`retryFuture` takes `Future` (a block which generates `Future`, more precisely) instead of a block. It works as same as `retryAsync`, but it requires `ExecutionContext` additionally.
+`retryFuture` takes `Future` (a block which generates `Future`, more precisely) instead of a function. Note that it requires `ExecutionContext` additionally.
 
 ```scala
 import com.github.takezoe.retry._
@@ -38,7 +38,7 @@ import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
 implicit val rm = new RetryManager()
-implicit val config = RetryConfig(
+implicit val policy = RetryPolicy(
   maxAttempts = 3, 
   retryDuration = 1.second, 
   backOff = ExponentialBackOff
@@ -50,4 +50,22 @@ val future: Future[String] = retryFuture {
     "Hello World!"
   }
 }
+```
 
+## CircuitBreaker
+
+```scala
+import com.github.takezoe.retry._
+import scala.concurrent.duration._
+
+implicit val policy = CircuitBreakerPolicy(
+  failureThreshold = 3,
+  successThreshold = 3,
+  retryDuration = 1.minute
+)
+
+val result: String = circuitBreaker {
+  // Something can be failed
+  "Hello World!"
+}
+```
