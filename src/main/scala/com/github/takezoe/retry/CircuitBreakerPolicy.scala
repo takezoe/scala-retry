@@ -9,7 +9,7 @@ case class CircuitBreakerContext(
   state: State = Close,
   failureCount: Int = 0,
   successCount: Int = 0,
-  lastFailure: Option[FailureInfo] = None,
+  lastFailure: Option[FailureInfo] = None
 )
 
 case class FailureInfo(

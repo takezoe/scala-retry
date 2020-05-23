@@ -6,6 +6,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success}
+import java.util.function.Consumer
 
 class RetryManager {
 
@@ -17,29 +18,31 @@ class RetryManager {
     override def run(): Unit = {
       while(running.get()){
         val currentTime = System.currentTimeMillis
-        tasks.iterator().forEachRemaining { task =>
-          if(task.nextRun <= currentTime){
-            tasks.remove(task)
-            val future = task.f()
-            future.onComplete {
-              case Success(v) => task.promise.success(v)
-              case Failure(e) => {
-                if(task.count == task.policy.maxAttempts){
-                  task.policy.onFailure(RetryContext(task.count + 1, e))
-                  task.promise.failure(e)
-                } else {
-                  task.policy.onRetry(RetryContext(task.count + 1, e))
-                  val count = task.count + 1
-                  val nextDuration = task.policy.backOff.nextDuration(count, task.policy.retryDuration.toMillis)
-                  val nextRun = currentTime + nextDuration + jitter(task.policy.jitter.toMillis)
-                  tasks.add(new FutureRetryTask(task.f, task.policy, task.ec, task.promise, nextRun, count))
+        tasks.iterator().forEachRemaining(new Consumer[FutureRetryTask]{
+          override def accept(task: FutureRetryTask): Unit = {
+            if(task.nextRun <= currentTime){
+              tasks.remove(task)
+              val future = task.f()
+              future.onComplete {
+                case Success(v) => task.promise.success(v)
+                case Failure(e) => {
+                  if(task.count == task.policy.maxAttempts){
+                    task.policy.onFailure(RetryContext(task.count + 1, e))
+                    task.promise.failure(e)
+                  } else {
+                    task.policy.onRetry(RetryContext(task.count + 1, e))
+                    val count = task.count + 1
+                    val nextDuration = task.policy.backOff.nextDuration(count, task.policy.retryDuration.toMillis)
+                    val nextRun = currentTime + nextDuration + jitter(task.policy.jitter.toMillis)
+                    tasks.add(new FutureRetryTask(task.f, task.policy, task.ec, task.promise, nextRun, count))
+                  }
                 }
-              }
-            }(task.ec)
+              }(task.ec)
+            }
           }
-        }
+        })
+        Thread.sleep(100)
       }
-      Thread.sleep(100)
     }
   }
 
