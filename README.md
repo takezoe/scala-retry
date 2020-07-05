@@ -1,4 +1,4 @@
-# scala-retry ![CI](https://github.com/takezoe/scala-retry/workflows/CI/badge.svg) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.takezoe/scala-retry_2.12/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.github.takezoe/scala-retry_2.12)
+# scala-retry [![CI](https://github.com/takezoe/scala-retry/workflows/CI/badge.svg)](https://github.com/takezoe/scala-retry/actions?query=branch%3Amaster) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.takezoe/scala-retry_2.12/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.github.takezoe/scala-retry_2.12)
 
 Offers simple retry functionality for Scala.
 
