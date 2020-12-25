@@ -9,7 +9,7 @@ object LinerBackOff extends BackOff {
 }
 
 object ExponentialBackOff extends BackOff {
-  override def nextDuration(count: Int, duration: Long): Long = duration ^ count
+  override def nextDuration(count: Int, duration: Long): Long = duration * scala.math.pow(2, count).toLong
 }
 
 object FixedBackOff extends BackOff {
