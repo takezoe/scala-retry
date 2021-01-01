@@ -2,11 +2,11 @@ name := "scala-retry"
 
 organization := "com.github.takezoe"
 
-version := "0.0.5"
+version := "0.0.6"
 
-scalaVersion := "2.12.11"
+scalaVersion := "2.13.4"
 
-crossScalaVersions := Seq("2.12.11", "2.13.1", "2.11.12")
+crossScalaVersions := Seq("2.12.12", "2.13.4", "2.11.12")
 
 libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % "3.0.8" % "test"
